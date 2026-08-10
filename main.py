@@ -1,4 +1,5 @@
-# =====================================================================
+# 
+import asyncio
 # 2. EL CORAZÓN DEL SISTEMA: ALARMA 1 HORA ANTES (EMA 15 / 15.5)
 # =====================================================================
 class MotorFractalJuanTrech:
