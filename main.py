@@ -78,7 +78,7 @@ class MotorFractalJuanTrech:
             if distancia_pips > 30:
                 self.alarma_enviada[activo][t] = False
 
-motor_fractal = MotorFractalJuanTrech()import asyncio
+motor_fractal = MotorFractalJuanTrech()
 import json
 import logging
 import os
