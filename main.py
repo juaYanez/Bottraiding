@@ -16,7 +16,8 @@ class MotorFractalJuanTrech:
     """
     def __init__(self):
         self.temporalidades = ["Mensual", "Semanal", "Diario", "H4", "H1", "M30"]
-        self.activos = os.environ.get("ACTIVOS").split(",")
+        self.activos = os.getenv("ACTIVOS", "EURUSD,GBPUSD").split(",")
+
         self.ultimos_precios = {activo: 0.0 for activo in self.activos}
         
         # Historial de precios por activo y temporalidad
