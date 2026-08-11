@@ -299,19 +299,19 @@ def responder_a_juan(mensaje_texto: str):
 # ==========================================
 # 6. INICIALIZACIÓN DEL BOT Y SERVIDOR
 # ==========================================
-if __name__ == "__main__":
-    import uvicorn
-
-    # 1. Iniciar la escucha de Telegram en un hilo paralelo
-    def arrancar_telegram():
+# 1. Registrar el evento de arranque en FastAPI
+@app_fastapi.on_event("startup")
+def iniciar_escucha_telegram():
+    def arrancar():
         if bot:
-            logging.info("Shane: Escuchador de Telegram activado 24/7.")
+            logging.info("Shane: Escuchador de Telegram activado en segundo plano 24/7.")
             bot.infinity_polling(skip_pending_updates=True)
 
-    thread_tele = threading.Thread(target=arrancar_telegram, daemon=True)
+    thread_tele = threading.Thread(target=arrancar, daemon=True)
     thread_tele.start()
 
-    # 2. Iniciar el servidor FastAPI (Latidos y Alertas)
+# 2. Inicialización limpia del servidor
+if __name__ == "__main__":
+    import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app_fastapi, host="0.0.0.0", port=port)
-
