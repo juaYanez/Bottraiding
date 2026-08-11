@@ -301,5 +301,17 @@ def responder_a_juan(mensaje_texto: str):
 # ==========================================
 if __name__ == "__main__":
     import uvicorn
-    # Iniciar servidor FastAPI para recibir el latido de 60s
-    uvicorn.run(app_fastapi, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+
+    # 1. Iniciar la escucha de Telegram en un hilo paralelo
+    def arrancar_telegram():
+        if bot:
+            logging.info("Shane: Escuchador de Telegram activado 24/7.")
+            bot.infinity_polling(skip_pending_updates=True)
+
+    thread_tele = threading.Thread(target=arrancar_telegram, daemon=True)
+    thread_tele.start()
+
+    # 2. Iniciar el servidor FastAPI (Latidos y Alertas)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app_fastapi, host="0.0.0.0", port=port)
+
