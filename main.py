@@ -198,9 +198,9 @@ cerebro_fractal = NucleoFractalEMAs()
 async def iniciar_sistema_matriz():
     logging.info("Iniciando motor con especialización de EMAs y ciclos fractales...")
 
-    enviar_alerta_completa(
-        "Sistema fractal de EMAs y conteo de velas iniciado en la nube. Monitoreando ciclos desde M30 hasta mensual."
-    )
+    
+    
+    
 
     while True:
         try:
