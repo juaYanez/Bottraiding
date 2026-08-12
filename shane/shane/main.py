@@ -289,12 +289,39 @@ def responder_a_juan(mensaje_texto: str):
             return f"⚠️ Juan, hace {int(dif)} segundos que no recibo el latido del motor. Podría estar desconectado."
         return "✅ El motor principal está corriendo activamente y enviando latidos cada 60 segundos."
 
+    
     else:
-        return (
-            f"Recibido Juan: '{texto}'.\n"
-            f"Estoy enfocado exclusivamente en **Boom 500, Boom 1000 y GBP/USD**.\n"
-            f"Puedes pedirme medir fractales, auditar zambullidas de EMAs o dejarme tareas de alerta."
+        respuesta_final = (
+            f"Recibido Juan: {texto}.\n"
+            f"Estoy enfocado exclusivamente en BOOM 500, BOOM 1000 y GBP/USD.\n"
+            f"Puedes pedirme medir fractales, auditar zambullidas de EMA o registrar tareas."
         )
+        
+        # Despacho físico blindado (Texto y Voz)
+        try:
+            if bot and CHAT_ID:
+                # 1. Envío físico del texto
+                bot.send_message(CHAT_ID, respuesta_final, parse_mode="Markdown")
+                
+                # 2. Generación y envío físico del audio (Voz) limpio de símbolos
+                texto_limpio = respuesta_final.replace("*", "").replace("#", "").replace("_", "")
+                tts = gTTS(text=texto_limpio, lang='es')
+                audio_path = "respuesta_shane.mp3"
+                tts.save(audio_path)
+                
+                with open(audio_path, 'rb') as audio_file:
+                    bot.send_voice(CHAT_ID, voice=audio_file)
+                    
+                logging.info("Shane respondió físicamente con texto y voz de forma exitosa.")
+        except Exception as e:
+            logging.error(f"Error crítico en el despacho físico de Shane: {e}")
+            
+        return respuesta_final
+
+        
+            
+        
+        
 
 # ==========================================
 # 6. INICIALIZACIÓN DEL BOT Y SERVIDOR
