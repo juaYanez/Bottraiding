@@ -1,3 +1,4 @@
+
 from datetime import datetime
 import os
 import requests
@@ -166,6 +167,14 @@ if __name__ == "__main__":
     ultimo_comando_procesado = ""
     contador_rutina = 0
 
+    # Variables de estado en tiempo real
+    activo_actual = "Boom 1000 / USD"
+    ema15_m30_actual = 0.0
+    ema50_m30_actual = 0.0
+    m1_cruzo_actual = False
+    m5_cruzo_actual = False
+    m15_cruzo_actual = False
+
     while True:
         try:
             # 1. Escucha rápida a Telegram (cada 3 segundos)
@@ -173,7 +182,14 @@ if __name__ == "__main__":
             
             if comando and comando != ultimo_comando_procesado:
                 if any(palabra in comando for palabra in ["escanear", "scanear", "scanner", "escaneo"]):
-                    ejecutar_escanear_auditoria()
+                    ejecutar_escanear_auditoria(
+                        activo=activo_actual,
+                        ema15_m30=ema15_m30_actual,
+                        ema50_m30=ema50_m30_actual,
+                        m1_cruzo=m1_cruzo_actual,
+                        m5_cruzo=m5_cruzo_actual,
+                        m15_cruzo=m15_cruzo_actual
+                    )
                     ultimo_comando_procesado = comando
 
             # 2. Rutinas secundarias periódicas (~cada 5 minutos)
@@ -187,3 +203,5 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Error en el bucle principal: {e}")
             time.sleep(5)
+    
+
