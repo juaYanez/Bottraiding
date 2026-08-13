@@ -1,4 +1,3 @@
-
 from datetime import datetime
 import os
 import requests
@@ -13,8 +12,7 @@ CHAT_ID = "8687968442"
 
 def enviar_alerta_completa(mensaje_texto):
     """
-    Envía la alerta de forma dual: por texto formateado y por audio (voz)
-    para que puedas escucharla mientras manejas.
+    Envía la alerta de forma dual: por texto formateado y por audio (voz).
     """
     # 1. Enviar mensaje de texto
     url_text = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -50,15 +48,25 @@ def enviar_alerta_completa(mensaje_texto):
 
 
 # ==============================================================================
-# MÓDULO ESCÁNER DE AUDITORÍA CIEGA (Escucha tu comando)
+# MÓDULO ESCÁNER DE AUDITORÍA CIEGA
 # ==============================================================================
+ultimo_update_id = None
+
 def obtener_ultimo_comando():
     """Revisa si enviaste un mensaje desde Telegram sin romper el bot."""
-    url = f"https://api.telegram.org/bot{TOKEN}/getUpdates?offset=-1"
+    global ultimo_update_id
+    
+    url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
+    params = {"timeout": 1, "limit": 1}
+    if ultimo_update_id is not None:
+        params["offset"] = ultimo_update_id + 1
+
     try:
-        res = requests.get(url, timeout=5).json()
+        res = requests.get(url, params=params, timeout=5).json()
         if 'result' in res and len(res['result']) > 0:
             last_update = res['result'][0]
+            ultimo_update_id = last_update['update_id']
+            
             msg = last_update.get('message', {})
             chat_id = msg.get('chat', {}).get('id')
             
@@ -71,10 +79,6 @@ def obtener_ultimo_comando():
 
 
 def ejecutar_escanear_auditoria(activo="Boom / USD", ema15_m30=0.0, ema50_m30=0.0, m1_cruzo=False, m5_cruzo=False, m15_cruzo=False, umbral=0.0008):
-    """
-    Escáner de memoria en vivo: Muestra la radiografía matemática exacta
-    para ver en qué punto de la lógica se detiene o si pasa de largo.
-    """
     ahora = datetime.utcnow()
     distancia_m30 = abs(ema15_m30 - ema50_m30)
 
@@ -109,7 +113,7 @@ def ejecutar_escanear_auditoria(activo="Boom / USD", ema15_m30=0.0, ema50_m30=0.
 
 
 # ==============================================================================
-# FASE 1: AVISO DE INICIO DE MES (ORDER BLOCK MENSUAL)
+# FASE 1: AVISO DE INICIO DE MES
 # ==============================================================================
 def verificar_inicio_de_mes():
     ahora = datetime.utcnow()
@@ -119,7 +123,7 @@ def verificar_inicio_de_mes():
 
 
 # ==============================================================================
-# FASE 2: GATILLO DE LOS PRIMEROS 5 DÍAS (CASCADA M30)
+# FASE 2: GATILLO DE LOS PRIMEROS 5 DÍAS
 # ==============================================================================
 def evaluar_gatillo_dias_iniciales(m1_cruzo, m5_cruzo, m15_cruzo, ema15_m30, ema50_m30, activo="Boom / USD"):
     ahora = datetime.utcnow()
@@ -140,7 +144,7 @@ def evaluar_gatillo_dias_iniciales(m1_cruzo, m5_cruzo, m15_cruzo, ema15_m30, ema
 
 
 # ==============================================================================
-# FASE 3: MAPA FRACTAL Y GESTIÓN DE ENTRADA/PARCIALES
+# FASE 3: MAPA FRACTAL Y GESTIÓN DE ENTRADA
 # ==============================================================================
 def evaluar_ciclo_fractal(temporalidad, activo, precio_actual, ema15_val, ema50_val, en_la_cima=False, minutos_para_tocar_piso=None):
     if en_la_cima:
@@ -164,10 +168,7 @@ if __name__ == "__main__":
     print("Motorcito de trading completo iniciado...")
     enviar_alerta_completa("<b>Motorcito operativo:</b> Sistema completo y escuchando comandos.")
 
-    ultimo_comando_procesado = ""
     contador_rutina = 0
-
-    # Variables de estado en tiempo real
     activo_actual = "Boom 1000 / USD"
     ema15_m30_actual = 0.0
     ema50_m30_actual = 0.0
@@ -180,19 +181,17 @@ if __name__ == "__main__":
             # 1. Escucha rápida a Telegram (cada 3 segundos)
             comando = obtener_ultimo_comando()
             
-            if comando and comando != ultimo_comando_procesado:
-                if any(palabra in comando for palabra in ["escanear", "scanear", "scanner", "escaneo"]):
-                    ejecutar_escanear_auditoria(
-                        activo=activo_actual,
-                        ema15_m30=ema15_m30_actual,
-                        ema50_m30=ema50_m30_actual,
-                        m1_cruzo=m1_cruzo_actual,
-                        m5_cruzo=m5_cruzo_actual,
-                        m15_cruzo=m15_cruzo_actual
-                    )
-                    ultimo_comando_procesado = comando
+            if comando and any(palabra in comando for palabra in ["escanear", "scanear", "scanner", "escaneo"]):
+                ejecutar_escanear_auditoria(
+                    activo=activo_actual,
+                    ema15_m30=ema15_m30_actual,
+                    ema50_m30=ema50_m30_actual,
+                    m1_cruzo=m1_cruzo_actual,
+                    m5_cruzo=m5_cruzo_actual,
+                    m15_cruzo=m15_cruzo_actual
+                )
 
-            # 2. Rutinas secundarias periódicas (~cada 5 minutos)
+            # 2. Rutinas secundarias periódicas
             contador_rutina += 1
             if contador_rutina >= 100:
                 verificar_inicio_de_mes()
@@ -203,5 +202,3 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Error en el bucle principal: {e}")
             time.sleep(5)
-    
-
