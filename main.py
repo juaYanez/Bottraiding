@@ -1,45 +1,4 @@
-import datetime
-import os
-import requests
-import time
-from gtts import gTTS
 
-# =====================================================================
-# CONFIGURACIÓN DE TELEGRAM Y CONEXIÓN
-# =====================================================================
-TOKEN = "8819113948:AAGn6QUsM-ZFsROMBqi5CJ1DOFWDqA1AKvs"
-CHAT_ID = "8687968442"
-
-def enviar_alerta_completa(mensaje_texto):
-    """
-    Envía la alerta de forma dual: por texto formateado y por audio (voz)
-    para que puedas escucharla mientras manejas.
-    """
-    # 1. Enviar mensaje de texto
-    url_text = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": mensaje_texto, "parse_mode": "HTML"}
-    try:
-        requests.post(url_text, data=payload)
-    except Exception as e:
-        print(f"Error enviando texto a Telegram: {e}")
-    
-    # 2. Generar y enviar audio (Voz)
-    try:
-        texto_limpio = (
-            mensaje_texto.replace("<b>", "")
-                         .replace("</b>", "")
-                         .replace("🚀", "")
-                         .replace("📊", "")
-                         .replace("<br>", " ")
-        )
-        tts = gTTS(text=texto_limpio, lang='es')
-        audio_path = "alerta.mp3"
-        tts.save(audio_path)
-        
-        url_audio = f"https://api.telegram.org/bot{TOKEN}/sendAudio"
-        with open(audio_path, "rb") as audio:
-            requests.post(url_audio, data={"chat_id": CHAT_ID}, files={"audio": audio})
-        
         if os.path.exists(audio_path):
             os.remove(audio_path)
     except Exception as e:
