@@ -1,1 +1,126 @@
 
+import time
+import logging
+import requests
+import json
+import os
+import websocket
+
+# Configuración del sistema de infraestructura y antifallo
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
+logger = logging.getLogger("MotorInfraestructuraBase")
+
+class MotorInfraestructura:
+    def __init__(self):
+        self.nombre = "Núcleo Independiente de Infraestructura y Antifallo"
+        
+        # Credenciales de infraestructura (Telegram y Conexión base de Deriv)
+        self.telegram_token = os.getenv("TELEGRAM_TOKEN", "TU_TOKEN_DE_TELEGRAM_AQUI")
+        self.chat_id = os.getenv("TELEGRAM_CHAT_ID", "TU_CHAT_ID_AQUI")
+        self.deriv_app_id = "1089"  # Identificador público de conexión general a Deriv
+        self.deriv_ws_url = f"wss://ws.derivws.com/websockets/v3?app_id={self.deriv_app_id}"
+        
+        # Memoria de persistencia para evitar pérdidas de estado ante reinicios o cortes
+        self.archivo_memoria = "memoria_estado.json"
+        self.estado_sistema = self.cargar_memoria()
+        logger.info(f"Iniciando {self.nombre}...")
+
+    def cargar_memoria(self):
+        """Recupera automáticamente el último estado guardado en disco"""
+        if os.path.exists(self.archivo_memoria):
+            try:
+                with open(self.archivo_memoria, "r") as f:
+                    datos = json.load(f)
+                    logger.info("Memoria recuperada con éxito. Retomando operaciones desde el último punto registrado.")
+                    return datos
+            except Exception as e:
+                logger.error(f"Error al leer la memoria de persistencia: {e}")
+        return {"estado": "inicializado", "ciclos_completados": 0, "ultimo_latido": time.time()}
+
+    def guardar_memoria(self):
+        """Guarda en disco el estado actual del motor ante cualquier eventualidad"""
+        try:
+            with open(self.archivo_memoria, "w") as f:
+                json.dump(self.estado_sistema, f)
+        except Exception as e:
+            logger.error(f"Error al guardar la memoria del motor: {e}")
+
+    def enviar_alerta_telegram(self, mensaje):
+        """Canal de comunicación de emergencias con Telegram"""
+        if self.telegram_token == "TU_TOKEN_DE_TELEGRAM_AQUI":
+            logger.warning("Telegram no configurado (Modo Silencioso) -> " + mensaje)
+            return
+            
+        url = f"https://api.telegram.org/bot{self.telegram_token}/sendMessage"
+        payload = {"chat_id": self.chat_id, "text": mensaje, "parse_mode": "Markdown"}
+        try:
+            respuesta = requests.post(url, json=payload, timeout=5)
+            if respuesta.status_code != 200:
+                logger.error(f"Error al notificar a Telegram: {respuesta.text}")
+        except Exception as e:
+            logger.error(f"¡Alerta antifallo! Falló la conexión con la API de Telegram: {e}")
+
+    def verificar_conexion_deriv(self):
+        """Verifica la pasarela de red con Deriv mediante WebSocket sin afectar el núcleo"""
+        intentos = 3
+        for intento in range(1, intentos + 1):
+            try:
+                ws = websocket.create_connection(self.deriv_ws_url, timeout=5)
+                ws.close()
+                return True
+            except Exception as e:
+                logger.warning(f"Reintento de conexión con Deriv ({intento}/{intentos}): {e}")
+                time.sleep(2)
+        
+        logger.warning("Conexión con Deriv en pausa temporal (Mantenimiento o red externa). El motor sigue vivo.")
+        return False
+
+    def escanear_modulo_estrategia(self, modulo_externo=None):
+        """
+        Escáner desacoplado:
+        Revisa de forma externa el módulo de la estrategia (en su propia carpeta) 
+        sin mezclar su lógica matemática dentro del código del motor.
+        """
+        if modulo_externo is None:
+            return {"estado": "en_espera", "mensaje": "Ninguna estrategia conectada en este directorio."}
+        
+        try:
+            # Ejecuta de forma segura la estrategia externa si está enlazada
+            return modulo_externo.ejecutar()
+        except Exception as e:
+            error_estrategia = f"🚨 *¡ALARMA EN MÓDULO EXTERNO!* Error en la estrategia conectada: {e}"
+            logger.error(error_estrategia)
+            self.enviar_alerta_telegram(error_estrategia)
+            return None
+
+    def latido_corazon(self):
+        """Latido del motor: Mantiene el pulso activo y actualiza la memoria de estado"""
+        self.estado_sistema["ciclos_completados"] += 1
+        self.estado_sistema["ultimo_latido"] = time.time()
+        self.guardar_memoria()
+        logger.info(f"💓 [Latido del Corazón] Ciclo de infraestructura #{self.estado_sistema['ciclos_completados']} registrado y respaldado.")
+
+    def iniciar_motor_continuo(self):
+        """Bucle principal de ejecución del motor independiente (Cada 60 segundos)"""
+        logger.info("Motor de infraestructura operando en bucle continuo...")
+        while True:
+            # 1. Pulso de vida y respaldo en memoria
+            self.latido_corazon()
+            
+            # 2. Verificación de pasarela de red
+            self.verificar_conexion_deriv()
+            
+            # 3. Espacio reservado para escanear el módulo externo de estrategia cuando lo agregues
+            self.escanear_modulo_estrategia()
+            
+            # Pausa optimizada de 60 segundos para cuidar recursos en Render
+            time.sleep(60)
+
+if __name__ == "__main__":
+    motor = MotorInfraestructura()
+    try:
+        motor.iniciar_motor_continuo()
+    except Exception as e:
+        error_fatal = f"💥 *¡EXCEPCIÓN CRÍTICA EN NÚCLEO!* El motor se detuvo: {e}"
+        logger.critical(error_fatal)
+        motor.enviar_alerta_telegram(error_fatal)
