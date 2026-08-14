@@ -77,18 +77,17 @@ def notificar_error_critico(contexto, excepcion):
 def obtener_ultimo_comando():
     url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
     try:
-        res = requests.get(url, params={"timeout": 2}, timeout=6).json()
+        res = requests.get(url, timeout=3).json()
         if "result" in res and len(res["result"]) > 0:
             ultimo = res["result"][-1]
             update_id = ultimo["update_id"]
-            requests.get(url, params={"offset": update_id + 1, "timeout": 1}, timeout=3)
+            requests.get(url, params={"offset": update_id + 1}, timeout=2)
             msg = ultimo.get("message", {})
-            chat_id = msg.get("chat", {}).get("id")
-            if str(chat_id) == str(CHAT_ID):
-                texto = msg.get("text", "")
-                return texto.strip().lower() if texto else ""
+            texto = msg.get("text", "")
+            if texto:
+                return texto.strip().lower()
     except Exception as e:
-        print(f"Error leyendo comandos: {e}")
+        print(f"Error comando: {e}")
     return ""
 
 def ejecutar_escaneo_manual():
