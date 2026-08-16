@@ -3,7 +3,7 @@ import logging
 import requests
 import json
 import os
-import websocket
+import websockets
 
 # Configuración del núcleo de infraestructura 24/7 (Sintéticos 500/1000 y GBP/USD)
 logging.basicConfig(
