@@ -1,9 +1,10 @@
+
 import time
 import logging
 import requests
 import json
 import os
-import websockets
+import websocket
 
 # Configuración del núcleo de infraestructura 24/7 (Sintéticos 500/1000 y GBP/USD)
 logging.basicConfig(
@@ -15,20 +16,20 @@ logger = logging.getLogger("MotorInfraestructuraBlindado")
 class MotorInfraestructura:
     def __init__(self):
         self.nombre = "Núcleo 24/7 Blindado con Auto-Reconexión y Memoria Persistente"
-        
+
         # Credenciales de Telegram
         self.telegram_token = os.getenv("TELEGRAM_TOKEN", "TU_TOKEN_DE_TELEGRAM_AQUI")
         self.chat_id = os.getenv("TELEGRAM_CHAT_ID", "TU_CHAT_ID_AQUI")
-        
+
         self.deriv_app_id = "1089"
         self.deriv_ws_url = f"wss://ws.derivws.com/websockets/v3?app_id={self.deriv_app_id}"
-        
+
         self.ultimo_offset_telegram = 0
-        
+
         # Archivo de persistencia para guardar el estado exacto ante cualquier caída
         self.archivo_memoria = "memoria_estado.json"
         self.estado_sistema = self.cargar_memoria()
-        
+
         logger.info(f"Iniciando {self.nombre}...")
         self.notificar_restauracion_servicio()
 
@@ -39,11 +40,11 @@ class MotorInfraestructura:
                 with open(self.archivo_memoria, "r", encoding="utf-8") as f:
                     datos = json.load(f)
                     ciclos_previos = datos.get("ciclos_completados", 0)
-                    logger.info(f"💾 [MEMORIA RECUPERADA] Retomando desde el ciclo #{ciclos_previos} sin perder el hilo de los activos.")
+                    logger.info(f"💾 [MEMORIA RECUPERADA] Retomando desde el ciclo #{ciclos_previos} sin perder el hilo")
                     return datos
             except Exception as e:
                 logger.error(f"Error al leer la memoria de persistencia: {e}")
-        
+
         # Estado inicial por defecto si arranca de cero
         return {
             "estado": "inicializado",
@@ -79,7 +80,7 @@ class MotorInfraestructura:
         """Avisa inmediatamente a Telegram que el motor volvió a la vida y recuperó su lugar"""
         ciclos = self.estado_sistema.get("ciclos_completados", 0)
         mensaje = (
-            "🔄 *[SERVICIO RESTABLECIDO Y RECUPERADO]*\n"
+            "🛠️ *[SERVICIO RESTABLECIDO Y RECUPERADO]*\n"
             "• El motor se ha reconectado tras la interrupción.\n"
             f"• Memoria sincronizada: Retomando desde el ciclo #{ciclos}\n"
             "• Vigilancia activa e inmediata sobre: *Volatility 500, Volatility 1000 y GBP/USD*."
@@ -117,13 +118,13 @@ class MotorInfraestructura:
         logger.info("Ejecutando escaneo manual del sistema...")
         ciclos = self.estado_sistema.get("ciclos_completados", 0)
         reporte = (
-            "🔍 *[INFORME DE ESTADO BLINDADO 24/7]*\n"
+            "📊 *[INFORME DE ESTADO BLINDADO 24/7]*\n"
             "• Estado: Operando sin descanso\n"
             f"• Ciclos totales (con persistencia): {ciclos}\n"
             "• Activos bajo supervisión estricta:\n"
-            "   - Volatility 500\n"
-            "   - Volatility 1000\n"
-            "   - GBP/USD\n"
+            "  - Volatility 500\n"
+            "  - Volatility 1000\n"
+            "  - GBP/USD\n"
             "• Auto-recuperación y reconexión: Activas"
         )
         self.enviar_alerta_telegram(reporte)
@@ -150,7 +151,7 @@ class MotorInfraestructura:
                         elif "estado" in texto_chat:
                             ciclos = self.estado_sistema.get("ciclos_completados", 0)
                             self.enviar_alerta_telegram(
-                                f"📊 *[ESTADO ACTUAL]*\n• Ciclos: {ciclos}\n• Monitoreo 24/7 de 500, 1000 y GBP/USD sin interrupciones."
+                                f"📈 *[ESTADO ACTUAL]*\n Ciclos: {ciclos}\n Monitoreo 24/7 de 500, 1000 y GBP/USD sin interrupción."
                             )
         except Exception as e:
             logger.error(f"Error al verificar mensajes de Telegram: {e}")
@@ -158,7 +159,7 @@ class MotorInfraestructura:
     def iniciar_motor_continuo(self):
         """Bucle principal ininterrumpido 24/7 con recuperación total de fallos"""
         logger.info("Motor en línea. Vigilando mercados 24/7.")
-        self.enviar_alerta_telegram("🚀 *[MOTOR 24/7 EN LÍNEA]* Vigilancia absoluta sobre Volatility 500, Volatility 1000 y GBP/USD con sistema anti-caídas.")
+        self.enviar_alerta_telegram("🚀 *[MOTOR 24/7 EN LÍNEA]* Vigilancia absoluta sobre Volatility 500, Volatility 1000 y GBP/USD.")
 
         while True:
             try:
@@ -173,7 +174,7 @@ class MotorInfraestructura:
 
             except Exception as e:
                 # Si ocurre cualquier incidencia con Render, la red o el servidor, avisa al instante
-                error_bucle = f"⚠️ *[ALERTA DE INCIDENCIA EN EL MOTOR]*\nError detectado:\n`{e}`\nEl sistema se auto-recupera y continúa operando."
+                error_bucle = f"⚠️ *[ALERTA DE INCIDENCIA EN EL MOTOR]*\nError detectado: {e}\nEl sistema se auto-recupera y continúa."
                 logger.error(error_bucle)
                 try:
                     self.enviar_alerta_telegram(error_bucle)
@@ -184,13 +185,13 @@ class MotorInfraestructura:
             time.sleep(1)
 
 if __name__ == "__main__":
-    motor = MotorInfraestructura()
     try:
-        motor.iniciar_motor_continuo()
+        mr = MotorInfraestructura()
+        mr.iniciar_motor_continuo()
     except Exception as e:
-        error_fatal = f"💥 *[PARADA CRÍTICA]* El motor colapsó por completo:\n`{e}`"
+        error_fatal = f"💥 *[PARADA CRÍTICA]* El motor colapsó por completo:\n{e}"
         logger.critical(error_fatal)
         try:
-            motor.enviar_alerta_telegram(error_fatal)
+            mr.enviar_alerta_telegram(error_fatal)
         except:
             pass
